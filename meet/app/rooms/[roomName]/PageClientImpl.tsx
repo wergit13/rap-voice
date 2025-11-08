@@ -223,7 +223,7 @@ function VideoConferenceComponent(props: {
         <KeyboardShortcuts />
         <VideoConference
           chatMessageFormatter={formatChatMessageLinks}
-          SettingsComponent={undefined}
+          SettingsComponent={SettingsMenu}
         />
         <DebugMode />
         <RecordingIndicator />

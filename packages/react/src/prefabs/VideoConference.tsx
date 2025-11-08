@@ -22,8 +22,8 @@ import { useCreateLayoutContext } from '../context';
 import { usePinnedTracks, useTracks } from '../hooks';
 import { Chat } from './Chat';
 import { ControlBar } from './ControlBar';
-import { VideoFileModal } from '../components/VideoFileModal';
-import { VideoFileShareContext } from '../hooks/useVideoFileShareToggle';
+import { ShareModal } from '../components/ShareModal';
+import { ShareProvider } from '../hooks/useShare';
 
 /**
  * @public
@@ -67,8 +67,7 @@ export function VideoConference({
     showSettings: false,
   });
   
-  // Separate state for video file share modal
-  const [showVideoFileShare, setShowVideoFileShare] = React.useState(false);
+  // Share modal state is managed by ShareProvider
   
   const lastAutoFocusedScreenShareTrack = React.useRef<TrackReferenceOrPlaceholder | null>(null);
 
@@ -133,19 +132,11 @@ export function VideoConference({
     tracks,
   ]);
 
-  // Video file share context value
-  const videoFileShareContextValue = React.useMemo(
-    () => ({
-      isOpen: showVideoFileShare,
-      toggle: () => setShowVideoFileShare(prev => !prev),
-    }),
-    [showVideoFileShare]
-  );
 
   return (
     <div className="lk-video-conference" {...props}>
       {isWeb() && (
-        <VideoFileShareContext.Provider value={videoFileShareContextValue}>
+        <ShareProvider>
           <LayoutContextProvider
             value={layoutContext}
             // onPinChange={handleFocusStateChange}
@@ -184,13 +175,9 @@ export function VideoConference({
               <SettingsComponent />
             </div>
           )}
-          {/* Video File Share Modal */}
-          <VideoFileModal
-            isOpen={showVideoFileShare}
-            onClose={() => setShowVideoFileShare(false)}
-          />
+          <ShareModal />
         </LayoutContextProvider>
-        </VideoFileShareContext.Provider>
+        </ShareProvider>
       )}
       <RoomAudioRenderer />
       <ConnectionStateToast />

@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
 function createParticipantToken(userInfo: AccessTokenOptions, roomName: string) {
   const at = new AccessToken(API_KEY, API_SECRET, userInfo);
-  at.ttl = '5m';
+  at.ttl = '20m';
   const grant: VideoGrant = {
     room: roomName,
     roomJoin: true,

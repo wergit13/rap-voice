@@ -86,7 +86,8 @@ export function VideoFilePlayer({
         height: '1px',
         opacity: 0,
         pointerEvents: 'none',
-        left: '-9999px'
+        left: '-9999px',
+        visibility: 'hidden',
       }}
       playsInline
       muted={false}

@@ -8,10 +8,9 @@ import { ChatToggle } from '../components/controls/ChatToggle';
 import { useLocalParticipantPermissions, usePersistentUserChoices } from '../hooks';
 import { useMediaQuery } from '../hooks/internal';
 import { useMaybeLayoutContext } from '../context';
-import { supportsScreenSharing } from '@livekit/components-core';
 import { mergeProps } from '../utils';
 import { SettingsMenuToggle } from '../components/controls/SettingsMenuToggle';
-import { VideoFileShareToggle } from '../components/controls/VideoFileShareToggle';
+import { ShareToggle } from '../components/controls/ShareToggle';
 import { StartMediaButton } from '../components/controls/StartMediaButton';
 
 /** @public */
@@ -120,16 +119,6 @@ export function ControlBar({
     [variation],
   );
 
-  const browserSupportsScreenSharing = supportsScreenSharing();
-
-  const [isScreenShareEnabled, setIsScreenShareEnabled] = React.useState(false);
-
-  const onScreenShareChange = React.useCallback(
-    (enabled: boolean) => {
-      setIsScreenShareEnabled(enabled);
-    },
-    [setIsScreenShareEnabled],
-  );
 
   const htmlProps = mergeProps({ className: 'lk-control-bar' }, props);
 
@@ -194,28 +183,14 @@ export function ControlBar({
           </div>
         </div>
       )}
-      {visibleControls.screenShare && browserSupportsScreenSharing && (
-        <TrackToggle
-          source={Track.Source.ScreenShare}
-          captureOptions={{ audio: true, selfBrowserSurface: 'include' }}
-          showIcon={showIcon}
-          onChange={onScreenShareChange}
-          onDeviceError={(error) => onDeviceError?.({ source: Track.Source.ScreenShare, error })}
-        >
-          {showText && (isScreenShareEnabled ? 'Stop screen share' : 'Share screen')}
-        </TrackToggle>
+      {(visibleControls.screenShare || visibleControls.videoFileShare) && (
+        <ShareToggle showIcon={showIcon} showText={showText} />
       )}
       {visibleControls.chat && (
         <ChatToggle>
           {showIcon && <ChatIcon />}
           {showText && 'Chat'}
         </ChatToggle>
-      )}
-      {visibleControls.videoFileShare && (
-        <VideoFileShareToggle>
-          {showIcon && <span>📹</span>}
-          {showText && 'Share Video'}
-        </VideoFileShareToggle>
       )}
       {visibleControls.settings && (
         <SettingsMenuToggle>
@@ -233,3 +208,4 @@ export function ControlBar({
     </div>
   );
 }
+

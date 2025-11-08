@@ -64,6 +64,9 @@ export function useVideoFileShare(
 
       setIsSharing(false);
       options.onTrackUnpublished?.();
+      if (videoElement) {
+        videoElement.pause();
+      }
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to stop sharing');
       setError(error);
@@ -74,6 +77,7 @@ export function useVideoFileShare(
   }, [videoElement, room, options]);
 
   const startSharing = useCallback(async () => {
+    console.log('Start video file sharing', videoElement);
     if (!videoElement) {
       const err = new Error('Video element not ready');
       setError(err);
@@ -89,14 +93,14 @@ export function useVideoFileShare(
       setIsLoading(true);
       setError(null);
 
-      // // CRITICAL: Unmute and set volume BEFORE playing
-      // videoElement.muted = false;
-      // videoElement.volume = 1.0;
+      // CRITICAL: Unmute and set volume BEFORE playing
+      videoElement.muted = false;
+      videoElement.volume = 1.0;
       
-      // // Ensure video is playing
-      // if (videoElement.paused) {
-      //   await videoElement.play();
-      // }
+      // Ensure video is playing
+      if (videoElement.paused) {
+        await videoElement.play();
+      }
 
       // // Small delay to ensure video is actually playing
       // await new Promise(resolve => setTimeout(resolve, 100));
@@ -134,11 +138,11 @@ export function useVideoFileShare(
       options.onTrackPublished?.();
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to start sharing');
+      console.error(error);
       setError(error);
       options.onError?.(error);
       
       // Cleanup on error
-      console.log('stop sharing 1');
       await stopSharing();
     } finally {
       setIsLoading(false);
