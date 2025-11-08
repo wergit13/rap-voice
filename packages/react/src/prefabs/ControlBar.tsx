@@ -10,8 +10,9 @@ import { useMediaQuery } from '../hooks/internal';
 import { useMaybeLayoutContext } from '../context';
 import { supportsScreenSharing } from '@livekit/components-core';
 import { mergeProps } from '../utils';
-import { StartMediaButton } from '../components/controls/StartMediaButton';
 import { SettingsMenuToggle } from '../components/controls/SettingsMenuToggle';
+import { VideoFileShareToggle } from '../components/controls/VideoFileShareToggle';
+import { StartMediaButton } from '../components/controls/StartMediaButton';
 
 /** @public */
 export type ControlBarControls = {
@@ -21,6 +22,7 @@ export type ControlBarControls = {
   screenShare?: boolean;
   leave?: boolean;
   settings?: boolean;
+  videoFileShare?: boolean;
 };
 
 const trackSourceToProtocol = (source: Track.Source) => {
@@ -208,6 +210,12 @@ export function ControlBar({
           {showIcon && <ChatIcon />}
           {showText && 'Chat'}
         </ChatToggle>
+      )}
+      {visibleControls.videoFileShare && (
+        <VideoFileShareToggle>
+          {showIcon && <span>📹</span>}
+          {showText && 'Share Video'}
+        </VideoFileShareToggle>
       )}
       {visibleControls.settings && (
         <SettingsMenuToggle>

@@ -3,6 +3,7 @@ packages:
   - 'examples/*'
   - 'docs/*'
   - 'tooling/*'
+  - 'meet'
 
 catalog:
   livekit-client: ^2.15.14

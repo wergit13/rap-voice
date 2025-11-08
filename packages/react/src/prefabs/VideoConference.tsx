@@ -22,7 +22,8 @@ import { useCreateLayoutContext } from '../context';
 import { usePinnedTracks, useTracks } from '../hooks';
 import { Chat } from './Chat';
 import { ControlBar } from './ControlBar';
-import { useWarnAboutMissingStyles } from '../hooks/useWarnAboutMissingStyles';
+import { VideoFileModal } from '../components/VideoFileModal';
+import { VideoFileShareContext } from '../hooks/useVideoFileShareToggle';
 
 /**
  * @public
@@ -65,6 +66,10 @@ export function VideoConference({
     unreadMessages: 0,
     showSettings: false,
   });
+  
+  // Separate state for video file share modal
+  const [showVideoFileShare, setShowVideoFileShare] = React.useState(false);
+  
   const lastAutoFocusedScreenShareTrack = React.useRef<TrackReferenceOrPlaceholder | null>(null);
 
   const tracks = useTracks(
@@ -128,16 +133,24 @@ export function VideoConference({
     tracks,
   ]);
 
-  useWarnAboutMissingStyles();
+  // Video file share context value
+  const videoFileShareContextValue = React.useMemo(
+    () => ({
+      isOpen: showVideoFileShare,
+      toggle: () => setShowVideoFileShare(prev => !prev),
+    }),
+    [showVideoFileShare]
+  );
 
   return (
     <div className="lk-video-conference" {...props}>
       {isWeb() && (
-        <LayoutContextProvider
-          value={layoutContext}
-          // onPinChange={handleFocusStateChange}
-          onWidgetChange={widgetUpdate}
-        >
+        <VideoFileShareContext.Provider value={videoFileShareContextValue}>
+          <LayoutContextProvider
+            value={layoutContext}
+            // onPinChange={handleFocusStateChange}
+            onWidgetChange={widgetUpdate}
+          >
           <div className="lk-video-conference-inner">
             {!focusTrack ? (
               <div className="lk-grid-layout-wrapper">
@@ -155,7 +168,7 @@ export function VideoConference({
                 </FocusLayoutContainer>
               </div>
             )}
-            <ControlBar controls={{ chat: true, settings: !!SettingsComponent }} />
+            <ControlBar controls={{ chat: true, settings: !!SettingsComponent, videoFileShare: true }} />
           </div>
           <Chat
             style={{ display: widgetState.showChat ? 'grid' : 'none' }}
@@ -171,7 +184,13 @@ export function VideoConference({
               <SettingsComponent />
             </div>
           )}
+          {/* Video File Share Modal */}
+          <VideoFileModal
+            isOpen={showVideoFileShare}
+            onClose={() => setShowVideoFileShare(false)}
+          />
         </LayoutContextProvider>
+        </VideoFileShareContext.Provider>
       )}
       <RoomAudioRenderer />
       <ConnectionStateToast />
