@@ -54,11 +54,11 @@ function ScreenShareTab(props: { label: string }) {
     captureOptions: { audio: true, selfBrowserSurface: 'include' },
     onChange: (isEnabled: boolean) => {
       if (isEnabled) {
-        setSharing(true, ShareType.SCREEN);
+        setSharing(ShareType.SCREEN);
         setStopHandler(() => toggle(false).then(() => {}));
         close();
       } else {
-        setSharing(false, undefined);
+        setSharing(null);
         setStopHandler(null);
       }
     },
@@ -80,7 +80,6 @@ function VideoShareTab(props: { label: string }) {
     useShare();
 
   const {
-    isSharing,
     isLoading,
     error: shareError,
     startSharing,
@@ -105,7 +104,7 @@ function VideoShareTab(props: { label: string }) {
       return;
     }
     console.log('start sharing');
-    setSharing(true, ShareType.VIDEO);
+    setSharing(ShareType.VIDEO);
     await startSharing();
     setStopHandler(() => stopSharing());
     console.log('set close');
@@ -115,7 +114,7 @@ function VideoShareTab(props: { label: string }) {
   return (
     <div className="video-share-tab">
       <div className="file-input-section">
-        <button className="lk-button" onClick={handleFileSelect} disabled={isSharing}>
+        <button className="lk-button" onClick={handleFileSelect}>
           Choose Video File
         </button>
         {selectedFile && (

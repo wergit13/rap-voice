@@ -14,7 +14,7 @@ interface UseVideoFileShareReturn {
   isLoading: boolean;
   error: Error | null;
   videoTrack: LocalTrackPublication | null;
-  audioTrack: LocalTrackPublication | null;
+  audioTracks: LocalTrackPublication[] | null;
   startSharing: () => Promise<void>;
   stopSharing: () => Promise<void>;
 }
@@ -32,7 +32,7 @@ export function useVideoFileShare(options: UseVideoFileShareOptions = {}): UseVi
   const [error, setError] = useState<Error | null>(null);
 
   const videoTrackRef = useRef<LocalTrackPublication | null>(null);
-  const audioTrackRef = useRef<LocalTrackPublication | null>(null);
+  const audioTracksRef = useRef<LocalTrackPublication[] | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const stopSharing = useCallback(async () => {
@@ -45,9 +45,13 @@ export function useVideoFileShare(options: UseVideoFileShareOptions = {}): UseVi
         videoTrackRef.current = null;
       }
 
-      if (audioTrackRef.current?.track) {
-        await room.localParticipant.unpublishTrack(audioTrackRef.current.track);
-        audioTrackRef.current = null;
+      if (audioTracksRef.current) {
+        for (const audioTrackRef of audioTracksRef.current) {
+          if (audioTrackRef.track) {
+            await room.localParticipant.unpublishTrack(audioTrackRef.track);
+          }
+        }
+        audioTracksRef.current = null;
       }
 
       // Stop all tracks in the stream
@@ -118,17 +122,22 @@ export function useVideoFileShare(options: UseVideoFileShareOptions = {}): UseVi
           name: 'shared-video-file',
           source: Track.Source.ScreenShare,
           simulcast: false,
+          stream: stream.id,
         });
         videoTrackRef.current = videoTrack;
       }
 
       // Publish audio track if available
       if (audioTracks.length > 0) {
-        const audioTrack = await room.localParticipant.publishTrack(audioTracks[0], {
-          name: 'shared-video-audio',
-          source: Track.Source.Unknown,
-        });
-        audioTrackRef.current = audioTrack;
+        audioTracksRef.current = [];
+        for (const rawAudioTrack of audioTracks) {
+          const audioTrack = await room.localParticipant.publishTrack(rawAudioTrack, {
+            name: 'shared-video-audio',
+            source: Track.Source.Unknown,
+            stream: stream.id,
+          });
+          audioTracksRef.current?.push(audioTrack);
+        }
       }
 
       setIsSharing(true);
@@ -146,22 +155,12 @@ export function useVideoFileShare(options: UseVideoFileShareOptions = {}): UseVi
     }
   }, [videoElement, isSharing, room, options, stopSharing]);
 
-  // Cleanup on unmount
-  //   useEffect(() => {
-  //     return () => {
-  //       if (isSharing) {
-  //         console.log('stop sharing 2');
-  //         stopSharing();
-  //       }
-  //     };
-  //   }, [isSharing, stopSharing]);
-
   return {
     isSharing,
     isLoading,
     error,
     videoTrack: videoTrackRef.current,
-    audioTrack: audioTrackRef.current,
+    audioTracks: audioTracksRef.current,
     startSharing,
     stopSharing,
   };

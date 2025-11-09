@@ -13,13 +13,13 @@ export const ShareToggle = React.forwardRef<HTMLButtonElement, ShareToggleProps>
     { showIcon = true, showText = false, className, children, onClick, ...rest },
     ref,
   ) {
-    const { isOpen, isSharing, open, stop, close } = useShare();
+    const { isOpen, activeType, open, stop, close } = useShare();
 
     const handleClick = React.useCallback(
       async (e: React.MouseEvent<HTMLButtonElement>) => {
         onClick?.(e);
         e.stopPropagation();
-        if (isSharing) {
+        if (activeType) {
           await stop();
         } else if (isOpen) {
           await close();
@@ -27,11 +27,12 @@ export const ShareToggle = React.forwardRef<HTMLButtonElement, ShareToggleProps>
           await open();
         }
       },
-      [onClick, isSharing, stop, isOpen, open, close],
+      [onClick, activeType, stop, isOpen, open, close],
     );
 
-    const label = isSharing ? 'Stop share' : 'Share';
-    const classes = `lk-button ${isSharing ? 'lk-button-active' : ''} ${className ?? ''}`.trim();
+    const label = activeType !== null ? 'Stop share' : 'Share';
+    const classes =
+      `lk-button ${activeType !== null ? 'lk-button-active' : ''} ${className ?? ''}`.trim();
 
     return (
       <button
@@ -43,7 +44,7 @@ export const ShareToggle = React.forwardRef<HTMLButtonElement, ShareToggleProps>
         aria-label={label}
         onClick={handleClick}
       >
-        {showIcon && (isSharing ? <ScreenShareStopIcon /> : <ScreenShareIcon />)}
+        {showIcon && (activeType !== null ? <ScreenShareStopIcon /> : <ScreenShareIcon />)}
         {showText ? label : children}
       </button>
     );

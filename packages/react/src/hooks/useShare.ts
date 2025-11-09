@@ -1,22 +1,14 @@
 import * as React from 'react';
 import { VideoFilePlayer } from '../components/VideoFilePlayer';
+import { useVideoControls, VideoControlsState } from './useVideoControls';
+import { useRoomContext } from '../context';
 
 export enum ShareType {
   SCREEN = 'screen',
   VIDEO = 'video',
 }
 
-export interface VideoControlsState {
-  isPlaying: boolean;
-  currentTime: number;
-  duration: number;
-  volume: number;
-  playbackRate: number;
-  handlePlayPause: () => void;
-  handleSeek: (time: number) => void;
-  handleVolumeChange: (volume: number) => void;
-  handlePlaybackRateChange: (rate: number) => void;
-}
+export type { VideoControlsState };
 
 export interface ShareContextValue {
   isOpen: boolean;
@@ -24,10 +16,9 @@ export interface ShareContextValue {
   close: () => void;
   toggle: () => void;
 
-  isSharing: boolean;
   activeType: ShareType | null;
 
-  setSharing: (sharing: boolean, type?: ShareType) => void;
+  setSharing: (type: ShareType | null) => void;
   setStopHandler: (fn: null | (() => Promise<void>)) => void;
   stop: () => Promise<void>;
 
@@ -46,7 +37,6 @@ const ShareContext = React.createContext<ShareContextValue | null>(null);
 
 export function ShareProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const [isSharing, setIsSharing] = React.useState(false);
   const [activeType, setActiveType] = React.useState<ShareType | null>(null);
   const stopHandlerRef = React.useRef<null | (() => Promise<void>)>(null);
 
@@ -54,13 +44,6 @@ export function ShareProvider({ children }: { children: React.ReactNode }) {
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [videoElement, setVideoElement] = React.useState<HTMLVideoElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  // Video playback control state
-  const [isPlaying, setIsPlaying] = React.useState(false);
-  const [currentTime, setCurrentTime] = React.useState(0);
-  const [duration, setDuration] = React.useState(0);
-  const [volume, setVolume] = React.useState(1);
-  const [playbackRate, setPlaybackRate] = React.useState(1);
 
   const open = React.useCallback(() => {
     setIsOpen(true);
@@ -74,13 +57,8 @@ export function ShareProvider({ children }: { children: React.ReactNode }) {
     stopHandlerRef.current = fn;
   }, []);
 
-  const setSharing = React.useCallback((sharing: boolean, type?: ShareType) => {
-    setIsSharing(sharing);
-    if (sharing) {
-      setActiveType(type ?? null);
-    } else {
-      setActiveType(null);
-    }
+  const setSharing = React.useCallback((type: ShareType | null) => {
+    setActiveType(type ?? null);
   }, []);
 
   const stop = React.useCallback(async () => {
@@ -91,7 +69,6 @@ export function ShareProvider({ children }: { children: React.ReactNode }) {
         // ignore
       }
     }
-    setIsSharing(false);
     console.log('stop called', activeType);
     if (activeType === ShareType.VIDEO) {
       console.log('clear video on stop');
@@ -101,101 +78,13 @@ export function ShareProvider({ children }: { children: React.ReactNode }) {
     setActiveType(null);
   }, [activeType]);
 
-  // Sync video element state with React state
-  React.useEffect(() => {
-    if (!videoElement || activeType !== 'video') return;
-
-    const updateTime = () => setCurrentTime(videoElement.currentTime);
-    const updateDuration = () => setDuration(videoElement.duration);
-    const updatePlaying = () => setIsPlaying(!videoElement.paused);
-
-    videoElement.addEventListener('timeupdate', updateTime);
-    videoElement.addEventListener('durationchange', updateDuration);
-    videoElement.addEventListener('play', updatePlaying);
-    videoElement.addEventListener('pause', updatePlaying);
-    videoElement.addEventListener('ended', updatePlaying);
-
-    // Initial sync
-    setCurrentTime(videoElement.currentTime);
-    setDuration(videoElement.duration);
-    setIsPlaying(!videoElement.paused);
-    setVolume(videoElement.volume);
-    setPlaybackRate(videoElement.playbackRate);
-
-    return () => {
-      videoElement.removeEventListener('timeupdate', updateTime);
-      videoElement.removeEventListener('durationchange', updateDuration);
-      videoElement.removeEventListener('play', updatePlaying);
-      videoElement.removeEventListener('pause', updatePlaying);
-      videoElement.removeEventListener('ended', updatePlaying);
-    };
-  }, [videoElement, activeType]);
-
-  // Video control handlers
-  const handlePlayPause = React.useCallback(() => {
-    if (!videoElement) return;
-    if (videoElement.paused) {
-      videoElement.play();
-    } else {
-      videoElement.pause();
-    }
-  }, [videoElement]);
-
-  const handleSeek = React.useCallback(
-    (time: number) => {
-      if (!videoElement) return;
-      videoElement.currentTime = time;
-      setCurrentTime(time);
-    },
-    [videoElement],
-  );
-
-  const handleVolumeChange = React.useCallback(
-    (vol: number) => {
-      if (!videoElement) return;
-      videoElement.volume = vol;
-      setVolume(vol);
-    },
-    [videoElement],
-  );
-
-  const handlePlaybackRateChange = React.useCallback(
-    (rate: number) => {
-      if (!videoElement) return;
-      videoElement.playbackRate = rate;
-      setPlaybackRate(rate);
-    },
-    [videoElement],
-  );
-
-  // Create videoControls object only when video is being shared
-  const videoControls = React.useMemo<VideoControlsState | null>(() => {
-    if (activeType !== 'video' || !videoElement) return null;
-
-    return {
-      isPlaying,
-      currentTime,
-      duration,
-      volume,
-      playbackRate,
-      handlePlayPause,
-      handleSeek,
-      handleVolumeChange,
-      handlePlaybackRateChange,
-    };
-  }, [
-    activeType,
-    videoElement,
-    isPlaying,
-    currentTime,
-    duration,
-    volume,
-    playbackRate,
-    handlePlayPause,
-    handleSeek,
-    handleVolumeChange,
-    handlePlaybackRateChange,
-  ]);
+  // Use video controls hook
+  const room = useRoomContext();
+  const videoControls = useVideoControls({
+    videoElement: videoElement,
+    videoSharingActive: activeType === ShareType.VIDEO,
+    room: room,
+  });
 
   const value = React.useMemo<ShareContextValue>(
     () => ({
@@ -203,7 +92,6 @@ export function ShareProvider({ children }: { children: React.ReactNode }) {
       open,
       close,
       toggle,
-      isSharing,
       activeType,
       setSharing,
       setStopHandler,
@@ -220,7 +108,6 @@ export function ShareProvider({ children }: { children: React.ReactNode }) {
       open,
       close,
       toggle,
-      isSharing,
       activeType,
       setSharing,
       setStopHandler,
