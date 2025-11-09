@@ -119,7 +119,6 @@ export function ControlBar({
     [variation],
   );
 
-
   const htmlProps = mergeProps({ className: 'lk-control-bar' }, props);
 
   const {
@@ -208,4 +207,3 @@ export function ControlBar({
     </div>
   );
 }
-

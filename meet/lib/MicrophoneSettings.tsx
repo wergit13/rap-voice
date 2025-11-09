@@ -10,13 +10,6 @@ export function MicrophoneSettings() {
     {
       filterOptions: {
         bufferOverflowMs: 100,
-        bufferDropMs: 200,
-        quality: isLowPowerDevice() ? 'low' : 'medium',
-        onBufferDrop: () => {
-          console.warn(
-            'krisp buffer dropped, noise filter versions >= 0.3.2 will automatically disable the filter',
-          );
-        },
       },
     },
   );

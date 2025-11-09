@@ -59,7 +59,7 @@ export function VideoFileControls({ videoElement, disabled = false }: VideoFileC
       videoElement.currentTime = time;
       setCurrentTime(time);
     },
-    [videoElement, disabled]
+    [videoElement, disabled],
   );
 
   const handleVolumeChange = React.useCallback(
@@ -69,7 +69,7 @@ export function VideoFileControls({ videoElement, disabled = false }: VideoFileC
       videoElement.volume = vol;
       setVolume(vol);
     },
-    [videoElement, disabled]
+    [videoElement, disabled],
   );
 
   const handlePlaybackRateChange = React.useCallback(
@@ -78,7 +78,7 @@ export function VideoFileControls({ videoElement, disabled = false }: VideoFileC
       videoElement.playbackRate = rate;
       setPlaybackRate(rate);
     },
-    [videoElement, disabled]
+    [videoElement, disabled],
   );
 
   const formatTime = (seconds: number): string => {

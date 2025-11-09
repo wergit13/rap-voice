@@ -1,21 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useRoomContext } from '../context';
 import { Track, LocalTrackPublication } from 'livekit-client';
 
 interface UseVideoFileShareOptions {
+  videoElement?: HTMLVideoElement | null;
   onError?: (error: Error) => void;
   onTrackPublished?: () => void;
   onTrackUnpublished?: () => void;
 }
 
 interface UseVideoFileShareReturn {
-  videoElement: HTMLVideoElement | null;
   isSharing: boolean;
   isLoading: boolean;
   error: Error | null;
   videoTrack: LocalTrackPublication | null;
   audioTrack: LocalTrackPublication | null;
-  setVideoElement: (element: HTMLVideoElement | null) => void;
   startSharing: () => Promise<void>;
   stopSharing: () => Promise<void>;
 }
@@ -25,15 +24,13 @@ interface HTMLVideoElementWithCapture extends HTMLVideoElement {
   captureStream(frameRate?: number): MediaStream;
 }
 
-export function useVideoFileShare(
-  options: UseVideoFileShareOptions = {}
-): UseVideoFileShareReturn {
+export function useVideoFileShare(options: UseVideoFileShareOptions = {}): UseVideoFileShareReturn {
   const room = useRoomContext();
-  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
+  const { videoElement } = options;
   const [isSharing, setIsSharing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  
+
   const videoTrackRef = useRef<LocalTrackPublication | null>(null);
   const audioTrackRef = useRef<LocalTrackPublication | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -55,7 +52,7 @@ export function useVideoFileShare(
 
       // Stop all tracks in the stream
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
 
@@ -96,7 +93,7 @@ export function useVideoFileShare(
       // CRITICAL: Unmute and set volume BEFORE playing
       videoElement.muted = false;
       videoElement.volume = 1.0;
-      
+
       // Ensure video is playing
       if (videoElement.paused) {
         await videoElement.play();
@@ -141,7 +138,7 @@ export function useVideoFileShare(
       console.error(error);
       setError(error);
       options.onError?.(error);
-      
+
       // Cleanup on error
       await stopSharing();
     } finally {
@@ -150,23 +147,21 @@ export function useVideoFileShare(
   }, [videoElement, isSharing, room, options, stopSharing]);
 
   // Cleanup on unmount
-//   useEffect(() => {
-//     return () => {
-//       if (isSharing) {
-//         console.log('stop sharing 2');
-//         stopSharing();
-//       }
-//     };
-//   }, [isSharing, stopSharing]);
+  //   useEffect(() => {
+  //     return () => {
+  //       if (isSharing) {
+  //         console.log('stop sharing 2');
+  //         stopSharing();
+  //       }
+  //     };
+  //   }, [isSharing, stopSharing]);
 
   return {
-    videoElement,
     isSharing,
     isLoading,
     error,
     videoTrack: videoTrackRef.current,
     audioTrack: audioTrackRef.current,
-    setVideoElement,
     startSharing,
     stopSharing,
   };
